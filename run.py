@@ -24,6 +24,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A script to compile a Solidity contract and run it against the mini EVM")
 
     parser.add_argument("--file", "-f", type=str, help="Solidity file to compile")
+    parser.add_argument("--contract", "-c", type=str, help="Specific contract in a file to compile.")
     parser.add_argument("--target-folder", "-t", default='test_files', type=str, help="Folder to look for the file")
 
     args = parser.parse_args()
@@ -39,8 +40,15 @@ if __name__ == '__main__':
         print(f"Could not locate directory: ./{target_folder}")
         sys.exit(1)
 
+    contract = args.contract
+
     result = subprocess.run(f"solc --bin-runtime {target_folder}/{file}", shell=True, check=True, capture_output=True, text=True).stdout
-    binary = result.split("part:")[1].strip()
+    
+    if contract is not None:
+        binary = result.split(contract)[1].split("\n")[2].strip()
+    else:
+        binary = result.split("part:")
+    print(binary)
     
     subprocess.run(
         ["cargo", "build", "--release"],
