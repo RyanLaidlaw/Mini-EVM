@@ -9,6 +9,7 @@ const MEM_OFLOW: &str = "Memory overflow";
 const MSG_SENDER: U256 = u256!(0xDEADBEEFDEADBEEFDEADBEEFDEADBEEF);
 const CONTRACT_ADDRESS: U256 = u256!(0xADDDECAFADDDECAFADDDECAFADDDECAF);
 const CHAIN_ID: U256 = u256!(0xBEEEEEF);
+const BASEFEE: U256 = u256!(1);
 
 #[derive(Debug)]
 pub struct ContractAccount {
@@ -27,6 +28,7 @@ pub struct Evm<'a> {
     pub halted: bool,
     pub calldata: Vec<u8>,
     pub callvalue: U256,
+    pub contract_balance: U256,
 }
 
 #[derive(Debug)]
@@ -58,6 +60,7 @@ impl<'a> Evm<'a> {
             halted: false,
             calldata,
             callvalue,
+            contract_balance: account.balance,
         }
     }
 
@@ -296,6 +299,14 @@ impl<'a> Evm<'a> {
 
                 0x46 => { // CHAINID
                     self.stack.push(CHAIN_ID);
+                },
+
+                0x47 => { // SELFBALANCE
+                    self.stack.push(self.contract_balance);
+                },
+
+                0x48 => { // BASEFEE
+                    self.stack.push(BASEFEE);
                 },
 
                 0x50 => { // POP

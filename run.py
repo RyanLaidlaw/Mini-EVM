@@ -48,7 +48,6 @@ if __name__ == '__main__':
         binary = result.split(contract)[1].split("\n")[2].strip()
     else:
         binary = result.split("part:")[1].strip()
-    print(binary)
     
     subprocess.run(
         ["cargo", "build", "--release"],
