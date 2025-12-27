@@ -42,7 +42,7 @@ fn main() {
                 calldata.extend_from_slice(&selector);
 
                 for arg in args.iter() {
-                    let value: U256 = U256::from_dec_str(arg).expect("invalid uint256 argument");
+                    let value: U256 = U256::from_dec_str(arg).expect("invalid uint256 argument"); // need to change to allow for other types
 
                     let mut buf: [u8; 32] = [0u8; 32];
                     value.to_big_endian(&mut buf);

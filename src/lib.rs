@@ -1,9 +1,14 @@
 use primitive_types::{U256, U512};
+use u256_literal::u256;
 use std::collections::HashMap;
 use sha3::{Digest, Keccak256};
+use chrono::{Utc, Datelike};
 
 const STACK_UFLOW: &str = "Stack underflow";
 const MEM_OFLOW: &str = "Memory overflow";
+const MSG_SENDER: U256 = u256!(0xDEADBEEFDEADBEEFDEADBEEFDEADBEEF);
+const CONTRACT_ADDRESS: U256 = u256!(0xADDDECAFADDDECAFADDDECAFADDDECAF);
+const CHAIN_ID: U256 = u256!(0xBEEEEEF);
 
 #[derive(Debug)]
 pub struct ContractAccount {
@@ -228,6 +233,18 @@ impl<'a> Evm<'a> {
                     self.stack.push(hash);
                 },
 
+                0x30 => { // ADDRESS
+                    self.stack.push(CONTRACT_ADDRESS);
+                },
+
+                0x32 => { // ORIGIN
+                    self.stack.push(MSG_SENDER);
+                },
+
+                0x33 => { // CALLER
+                    self.stack.push(MSG_SENDER);
+                },
+
                 0x34 => { // CALLVALUE
                     self.stack.push(self.callvalue);
                 },
@@ -271,6 +288,14 @@ impl<'a> Evm<'a> {
                             0u8
                         }
                     }
+                },
+
+                0x43 => { // BLOCK NUMBER
+                    self.stack.push(U256::from(get_block_num()));
+                },
+
+                0x46 => { // CHAINID
+                    self.stack.push(CHAIN_ID);
                 },
 
                 0x50 => { // POP
@@ -505,4 +530,8 @@ impl<'a> Evm<'a> {
             self.memory.resize(end, 0u8);
         }
     }
+}
+
+fn get_block_num() -> u32 {
+    Utc::now().day() // use day for block num for simplicity
 }
