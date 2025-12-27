@@ -8,7 +8,7 @@ def call(sig: str, *args: str) -> None:
     """
     Writes commands to the EVM, kind of like foundry cast
     
-    @param sig: (str) the function name to call in the contract
+    @param sig: (str) the function signature to call in the contract (ex: `setNumber(uint256)`)
     @param args: (str) arguments to pass into the function
     """
     cmd = {
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A script to compile a Solidity contract and run it against the mini EVM")
 
     parser.add_argument("--file", "-f", type=str, help="Solidity file to compile")
-    parser.add_argument("--contract", "-c", type=str, help="Specific contract in a file to compile.")
+    parser.add_argument("--contract", "-c", type=str, default=None, help="Specific contract in a file to compile.")
     parser.add_argument("--target-folder", "-t", default='test_files', type=str, help="Folder to look for the file")
 
     args = parser.parse_args()
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     if contract is not None:
         binary = result.split(contract)[1].split("\n")[2].strip()
     else:
-        binary = result.split("part:")
+        binary = result.split("part:")[1].strip()
     print(binary)
     
     subprocess.run(
