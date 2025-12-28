@@ -92,5 +92,7 @@ if __name__ == '__main__':
 
             parts = txn.split()
             call(parts[0], *parts[1:])
+    except:
+        pass # don't care about ctrl-c error
     finally:
         proc.terminate()
