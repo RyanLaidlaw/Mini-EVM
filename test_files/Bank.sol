@@ -19,6 +19,10 @@ contract Bank is Regulator {
         owner = msg.sender;
     }
 
+    function getOwner() public view returns (address) {
+        return owner;
+    }
+
     function deposit(uint256 amount) public {
         value += amount;
     }
