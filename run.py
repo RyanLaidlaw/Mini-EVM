@@ -3,6 +3,9 @@ import argparse
 import sys
 import json
 import os
+import shutil
+
+OUT_PATH = "./out"
 
 def call(sig: str, *args: str) -> None:
     """
@@ -42,12 +45,33 @@ if __name__ == '__main__':
 
     contract = args.contract
 
-    result = subprocess.run(f"solc --bin-runtime {target_folder}/{file}", shell=True, check=True, capture_output=True, text=True).stdout
+    if os.path.exists(OUT_PATH):
+        shutil.rmtree(OUT_PATH)
+    os.makedirs(OUT_PATH)
+
+
+    result = subprocess.run(f"solc --bin --optimize --overwrite -o out {target_folder}/{file}", shell=True, check=True, capture_output=True, text=True).stdout
     
+    files = os.listdir(OUT_PATH)
+    if len(files) > 1 and contract is None:
+        print("Found more than one contract in the test file. Please specify which to use (-c).")
+        sys.exit(1)
+
+    bin_files = [f for f in os.listdir(OUT_PATH) if f.endswith(".bin")]
+
     if contract is not None:
-        binary = result.split(contract)[1].split("\n")[2].strip()
+        path = f"{OUT_PATH}/{contract}.bin"
+        if not os.path.exists(path):
+            print(f"Contract {contract} not found in output")
+            sys.exit(1)
+
+        binary = open(path).read().strip()
     else:
-        binary = result.split("part:")[1].strip()
+        if len(bin_files) != 1:
+            print("Multiple contracts found. Use -c <ContractName>.")
+            sys.exit(1)
+
+        binary = open(f"{OUT_PATH}/{bin_files[0]}").read().strip()
     
     subprocess.run(
         ["cargo", "build", "--release"],

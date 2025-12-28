@@ -1,3 +1,4 @@
+use core::panic;
 use std::env;
 use std::io::{BufRead, Stdin, Stdout, Write, stdin, stdout};
 use serde::Deserialize;
@@ -20,9 +21,19 @@ enum Command {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let input: &String = &args[1];
-    let runtime_code: Vec<u8> = hex::decode(input).unwrap();
+    let deploy_code: Vec<u8> = hex::decode(input).unwrap();
 
-    let mut account: ContractAccount = ContractAccount::new(runtime_code);
+    let mut account: ContractAccount = ContractAccount::new(deploy_code);
+
+    let mut deploy_evm: Evm<'_> = Evm::new(&mut account, U256::zero(), vec![]);
+    let exit: ExitReason = deploy_evm.run().expect("Deployment failed");
+
+    match exit {
+        ExitReason::Return(runtime_code) => {
+            account.code = runtime_code;
+        }
+        _ => panic!("Deployment failed"),
+    }
 
     let stdin: Stdin = stdin();
     let mut stdout: Stdout = stdout();

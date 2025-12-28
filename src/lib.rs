@@ -398,8 +398,7 @@ impl<'a> Evm<'a> {
                 },
 
                 0x58 => { // PC
-                    self.stack.push(U256::from(self.pc));
-                    self.pc += 1;
+                    self.stack.push(U256::from(self.pc - 1));
                 },
 
                 0x5b => { // JUMPDEST
