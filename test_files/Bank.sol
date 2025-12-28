@@ -38,7 +38,7 @@ contract Bank is Regulator {
     }
 
     function checkValue(uint256 amount) public view returns (bool) {
-        return amount >= value;
+        return value >= amount;
     }
 
     function loan() public view returns (bool) {
