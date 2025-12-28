@@ -411,6 +411,34 @@ impl<'a> Evm<'a> {
                     // nothing
                 },
 
+                0x5e => { // MCOPY
+                    let dest_offset: U256 = self.stack.pop().expect(STACK_UFLOW);
+                    let offset: U256 = self.stack.pop().expect(STACK_UFLOW);
+                    let size: U256 = self.stack.pop().expect(STACK_UFLOW);
+
+                    let dest_offset: usize = Self::u256_to_usize(dest_offset)?;
+                    let offset: usize = Self::u256_to_usize(offset)?;
+                    let size: usize = Self::u256_to_usize(size)?;
+
+                    let end: usize = dest_offset.max(offset).checked_add(size).ok_or(MEM_OFLOW)?;
+
+                    self.check_memory_length(end);
+
+                    let mut tmp: Vec<u8> = vec![0u8; size];
+
+                    for i in 0..size {
+                        tmp[i] = if offset + i < self.memory.len() {
+                            self.memory[offset + i]
+                        } else {
+                            0
+                        };
+                    }
+
+                    for i in 0..size {
+                        self.memory[dest_offset + i] = tmp[i];
+                    }
+                },
+
                 0x5f => { // PUSH0
                     self.stack.push(U256::zero());
                 },
