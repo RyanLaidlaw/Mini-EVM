@@ -67,10 +67,6 @@ if __name__ == '__main__':
 
         binary = open(path).read().strip()
     else:
-        if len(bin_files) != 1:
-            print("Multiple contracts found. Use -c <ContractName>.")
-            sys.exit(1)
-
         binary = open(f"{OUT_PATH}/{bin_files[0]}").read().strip()
     
     subprocess.run(
