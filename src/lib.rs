@@ -156,7 +156,7 @@ impl<'a> Evm<'a> {
 
                 0x11 => { // GT   
                     let (a, b) = Self::pop_two(self)?;
-                    self.stack.push(if b > a { U256::one() } else { U256::zero() });
+                    self.stack.push(if a > b { U256::one() } else { U256::zero() });
                 },
 
                 0x12 => { // SLT
@@ -384,8 +384,11 @@ impl<'a> Evm<'a> {
                 },
 
                 0x56 => { // JUMP
-                    let counter: U256 = self.stack.pop().expect(STACK_UFLOW);
-                    self.pc = Self::u256_to_usize(counter)?;
+                    let counter: usize = Self::u256_to_usize(self.stack.pop().expect(STACK_UFLOW))?;
+                    if !self.valid_jumpdest(counter) {
+                        return Ok(ExitReason::Revert(vec![0x56]));
+                    }
+                    self.pc = counter;
                 },
 
                 0x57 => { // JUMPI
@@ -393,6 +396,9 @@ impl<'a> Evm<'a> {
                     let condition: U256 = self.stack.pop().expect(STACK_UFLOW);
                     
                     if condition != U256::zero() {
+                        if !self.valid_jumpdest(Self::u256_to_usize(counter_dest)?) {
+                            return Ok(ExitReason::Revert(vec![0x57]));
+                        }
                         self.pc = Self::u256_to_usize(counter_dest)?
                     };
                 },
@@ -479,7 +485,7 @@ impl<'a> Evm<'a> {
                 },
 
                 0xfe => { // INVALID
-                    return Ok(ExitReason::Revert(vec![]));
+                    return Ok(ExitReason::Revert(vec![0xfe]));
                 },
 
                 _ => return Err(format!("Unknown opcode: {:#x}", opcode)),
@@ -539,6 +545,10 @@ impl<'a> Evm<'a> {
         if self.memory.len() < end {
             self.memory.resize(end, 0u8);
         }
+    }
+
+    fn valid_jumpdest(&self, dest: usize) -> bool {
+        dest < self.code.len() && self.code[dest] == 0x5b
     }
 }
 

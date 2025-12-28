@@ -79,7 +79,7 @@ fn lt_gt_eq() {
     assert_eq!(evm.stack[0], U256::from(0));
 
     // Greater than 
-    let code: Vec<u8> = vec![0x60,0x03,0x60,0x02,0x11,0x00];
+    let code: Vec<u8> = vec![0x60,0x02,0x60,0x03,0x11,0x00];
     let mut account: ContractAccount = common::setup(code);
     let mut evm: Evm = Evm::new(&mut account, U256::zero(), vec![]);
 
