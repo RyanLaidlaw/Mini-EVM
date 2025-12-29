@@ -21,7 +21,7 @@ enum Command {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let input: &String = &args[1];
-    let deploy_code: Vec<u8> = hex::decode(input).unwrap();
+    let deploy_code: Vec<u8> = hex::decode(input).expect("Error decoding compiled contract");
 
     let mut account: ContractAccount = ContractAccount::new(deploy_code);
 
@@ -39,8 +39,8 @@ fn main() {
     let mut stdout: Stdout = stdout();
 
     for line  in stdin.lock().lines() {
-        let line: String = line.unwrap();
-        let cmd: Command = serde_json::from_str(&line).unwrap();
+        let line: String = line.expect("Could not read stdin line");
+        let cmd: Command = serde_json::from_str(&line).expect("Could not read command from stdin");
 
         match cmd {
             Command::Exit => break,
@@ -67,14 +67,14 @@ fn main() {
 
                 match result {
                     Ok(exit) => {
-                        writeln!(stdout, "{:?}", exit).unwrap();
+                        writeln!(stdout, "{:?}", exit).expect("Error writing Ok to stdout");
                     }
                     Err(e) => {
-                        writeln!(stdout, "error: {}", e).unwrap();
+                        writeln!(stdout, "error: {}", e).expect("Error writing Err to stdout");
                     }
                 }
 
-                stdout.flush().unwrap();
+                stdout.flush().expect("Error flushing stdout");
             }
         }
     }

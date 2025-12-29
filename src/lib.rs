@@ -317,7 +317,7 @@ impl<'a> Evm<'a> {
                     let offset_u256: U256 = self.stack.pop().expect(STACK_UFLOW);
                     let offset: usize = Self::u256_to_usize(offset_u256)?;
 
-                    let new_size_bytes: usize = offset.checked_add(32).unwrap();
+                    let new_size_bytes: usize = offset.checked_add(32).expect("Error calculating new memory size in bytes");
                     let new_size_words: usize = (new_size_bytes + 31) / 32;
                     self.memory_words = self.memory_words.max(new_size_words);
 
