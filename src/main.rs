@@ -81,9 +81,9 @@ fn main() {
 }
 
 fn function_selector(signature: &str) -> [u8; 4] {
-    let mut keccak = Keccak::v256();
+    let mut keccak: Keccak = Keccak::v256();
     keccak.update(signature.as_bytes());
-    let mut hash = [0u8; 32];
+    let mut hash: [u8; 32] = [0u8; 32];
     keccak.finalize(&mut hash);
     [hash[0], hash[1], hash[2], hash[3]]
 }
@@ -98,7 +98,7 @@ fn normalize_signature(sig: &str, args: &[String]) -> String {
         .next()
         .expect("invalid signature");
 
-    let types = vec!["uint256"; args.len()].join(",");
+    let types: String = vec!["uint256"; args.len()].join(",");
 
     format!("{name}({types})")
 }
