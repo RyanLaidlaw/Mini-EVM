@@ -6,20 +6,20 @@ This mini Ethereum Virtual Machine (EVM), built in Rust, gives users the ability
 This project was created as an introduction to the Rust programming language with the added benefit of learning the lowest levels of the EVM. 
 
 ## References/Resources
-[EVM Codes](https://www.evm.codes/)
-[EtherVM](https://ethervm.io/)
-[Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
+[EVM Codes](https://www.evm.codes/)<br>
+[EtherVM](https://ethervm.io/)<br>
+[Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)<br>
 
 ## Requirements
-[Python3](https://www.python.org/downloads/)
-[Foundry](https://getfoundry.sh/introduction/installation/)
-[Rust/Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
-[Solidity Compiler (solc)](https://docs.soliditylang.org/en/latest/installing-solidity.html)
+[Python3](https://www.python.org/downloads/)<br>
+[Foundry](https://getfoundry.sh/introduction/installation/)<br>
+[Rust/Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)<br>
+[Solidity Compiler (solc)](https://docs.soliditylang.org/en/latest/installing-solidity.html)<br>
 
 ## How to Run
 
 Example usage:
-`python3 run.py -f Counter.sol`
+`python3 run.py -f Counter.sol`<br>
 `python3 run.py -f Bank.sol -c MyContract -t test_files`
 
 ## Usage
@@ -39,7 +39,7 @@ cmd> setNumber(uint256) 5
 
 ### run.py
 
-This script compiles a Solidity contract found at the specified target folder (which defaults to test_files) and passes the runtime bytecode into the Rust program. This runtime bytecode is stored in the ContractAccount where the EVM can access it.
+This script compiles a Solidity contract found at the specified target folder (which defaults to test_files) and passes the runtime bytecode into the Rust program. This runtime bytecode is stored in the ContractAccount where the EVM can access it.<br>
 The program is kept alive to allow the user to interact with the contract, using syntax similar to Foundry's Cast.
 
 ### main.rs
