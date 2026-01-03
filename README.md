@@ -30,10 +30,12 @@ cmd> increment()
 cmd> number()
 cmd> setNumber(uint256) 5
 ```
-[!Note] number() uses Solidity's built in getter for public state variables
+> [!NOTE] 
+> number() uses Solidity's built in getter for public state variables
 
-[!NOTE] Functions with uint256 arguments (and possible other types in the future) can forgo the parameter type
-For instance: `setNumber(uint256) 5` is equivalent to `setNumber() 5`
+> [!NOTE] 
+> Functions with uint256 arguments (and possible other types in the future) can forgo the parameter type
+> For instance: `setNumber(uint256) 5` is equivalent to `setNumber() 5`
 
 ### run.py
 
