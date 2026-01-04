@@ -13,9 +13,15 @@ enum Command {
     Call {
         signature: String,
         args: Vec<String>,
+        types: Vec<String>,
     },
     #[serde(rename = "exit")]
     Exit,
+}
+
+struct EncodedArg {
+    head: Vec<u8>,
+    tail: Vec<u8>,
 }
 
 fn main() {
@@ -45,19 +51,38 @@ fn main() {
         match cmd {
             Command::Exit => break,
 
-            Command::Call { signature, args } => {
-                let normalized: String = normalize_signature(&signature, &args);
-                let selector: [u8; 4] = function_selector(&normalized);
+            Command::Call { signature, args, types } => {
+                let selector: [u8; 4] = function_selector(&signature);
 
                 let mut calldata: Vec<u8> = Vec::new();
                 calldata.extend_from_slice(&selector);
+                
+                let mut heads = Vec::new();
+                let mut tails = Vec::new();
 
-                for arg in args.iter() {
-                    let value: U256 = U256::from_dec_str(arg).expect("invalid uint256 argument"); // need to change to allow for other types
+                for (arg, ty) in args.iter().zip(types.iter()) {
+                    let encoded: EncodedArg = encode_arg(ty, arg);
+                    heads.push(encoded.head);
+                    tails.push(encoded.tail);
+                }
 
-                    let mut buf: [u8; 32] = [0u8; 32];
-                    value.to_big_endian(&mut buf);
-                    calldata.extend_from_slice(&buf);
+                let head_size: usize = 32 * heads.len();
+                let mut current_offset: usize = head_size;
+
+                for i in 0..heads.len() {
+                    if !tails[i].is_empty() {
+                        let mut offset_buf: Vec<u8> = vec![0u8; 32];
+                        U256::from(current_offset).to_big_endian(&mut offset_buf);
+                        heads[i] = offset_buf;
+                        current_offset += tails[i].len();
+                    }
+                }
+
+                for h in heads {
+                    calldata.extend_from_slice(&h);
+                }
+                for t in tails {
+                    calldata.extend_from_slice(&t);
                 }
                 
                 // spin up a new instance of the EVM for every call
@@ -88,17 +113,55 @@ fn function_selector(signature: &str) -> [u8; 4] {
     [hash[0], hash[1], hash[2], hash[3]]
 }
 
-fn normalize_signature(sig: &str, args: &[String]) -> String {
-    if sig.contains("uint") || sig.contains("address") {
-        return sig.to_string();
+fn encode_arg(ty: &str, value: &str) -> EncodedArg {
+    match ty {
+        "uint256" | "uint" => {
+            let v: U256 = U256::from_dec_str(value).expect("invalid uint256");
+            let mut buf: Vec<u8> = vec![0u8; 32];
+            v.to_big_endian(&mut buf);
+            EncodedArg { head: buf, tail: vec![] }
+        }
+
+        "address" => {
+            let addr: &str = value.strip_prefix("0x").unwrap_or(value);
+            let raw: Vec<u8> = hex::decode(addr).expect("invalid address");
+            assert_eq!(raw.len(), 20); //uint160
+
+            let mut buf: Vec<u8> = vec![0u8; 32];
+            buf[12..].copy_from_slice(&raw);
+            EncodedArg { head: buf, tail: vec![] }
+        }
+
+        "bool" => {
+            let v: u8 = match value {
+                "true" | "1" => 1u8,
+                "false" | "0" => 0u8,
+                _ => panic!("invalid bool"),
+            };
+
+            let mut buf: Vec<u8> = vec![0u8; 32];
+            buf[31] = v;
+            EncodedArg { head: buf, tail: vec![] }
+        }
+
+        "string" => {
+            let bytes: &[u8] = value.as_bytes();
+
+            let mut len_buf: Vec<u8> = vec![0u8; 32];
+            U256::from(bytes.len()).to_big_endian(&mut len_buf);
+
+            let mut data: Vec<u8> = bytes.to_vec();
+            while data.len() % 32 != 0 {
+                data.push(0);
+            }
+
+            EncodedArg {
+                head: vec![0u8; 32], // offset filled later
+                tail: [len_buf, data].concat(),
+            }
+        }
+
+        _ => panic!("unsupported type: {}", ty),
     }
-
-    let name: &str = sig
-        .split('(')
-        .next()
-        .expect("invalid signature");
-
-    let types: String = vec!["uint256"; args.len()].join(",");
-
-    format!("{name}({types})")
 }
+

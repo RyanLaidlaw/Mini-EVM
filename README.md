@@ -33,10 +33,6 @@ cmd> setNumber(uint256) 5
 > [!NOTE] 
 > number() uses Solidity's built in getter for public state variables
 
-> [!NOTE] 
-> Functions with uint256 arguments (and possible other types in the future) can forgo the parameter type
-> For instance: `setNumber(uint256) 5` is equivalent to `setNumber() 5`
-
 ### run.py
 
 This script compiles a Solidity contract found at the specified target folder (which defaults to test_files) and passes the runtime bytecode into the Rust program. This runtime bytecode is stored in the ContractAccount where the EVM can access it.<br>

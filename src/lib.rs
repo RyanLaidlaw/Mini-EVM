@@ -273,6 +273,26 @@ impl<'a> Evm<'a> {
                     self.stack.push(U256::from(self.calldata.len()));
                 },
 
+                0x37 => { // CALLDATACOPY
+                    let dest_offset: U256 = self.stack.pop().expect(STACK_UFLOW);
+                    let offset: U256 = self.stack.pop().expect(STACK_UFLOW);
+                    let size: U256 = self.stack.pop().expect(STACK_UFLOW);
+
+                    let dest_offset: usize = Self::u256_to_usize(dest_offset)?;
+                    let offset: usize = Self::u256_to_usize(offset)?;
+                    let size: usize = Self::u256_to_usize(size)?;
+
+                    self.check_memory_length(dest_offset + size);
+
+                    for i in 0..size {
+                        self.memory[dest_offset + i] = if offset + i < self.calldata.len() {
+                            self.calldata[offset + i]
+                        } else {
+                            0u8
+                        }
+                    }
+                },
+
                 0x39 => { // CODECOPY
                     let dest_offset: U256 = self.stack.pop().expect(STACK_UFLOW);
                     let offset: U256 = self.stack.pop().expect(STACK_UFLOW);
