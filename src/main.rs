@@ -13,7 +13,8 @@ enum Command {
     Call {
         signature: String,
         args: Vec<String>,
-        types: Vec<String>,
+        input_types: Vec<String>,
+        output_types: Vec<String>,
     },
     #[serde(rename = "exit")]
     Exit,
@@ -51,7 +52,7 @@ fn main() {
         match cmd {
             Command::Exit => break,
 
-            Command::Call { signature, args, types } => {
+            Command::Call { signature, args, input_types, output_types } => {
                 let selector: [u8; 4] = function_selector(&signature);
 
                 let mut calldata: Vec<u8> = Vec::new();
@@ -60,7 +61,7 @@ fn main() {
                 let mut heads = Vec::new();
                 let mut tails = Vec::new();
 
-                for (arg, ty) in args.iter().zip(types.iter()) {
+                for (arg, ty) in args.iter().zip(input_types.iter()) {
                     let encoded: EncodedArg = encode_arg(ty, arg);
                     heads.push(encoded.head);
                     tails.push(encoded.tail);
@@ -92,7 +93,15 @@ fn main() {
 
                 match result {
                     Ok(exit) => {
-                        writeln!(stdout, "{:?}", exit).expect("Error writing Ok to stdout");
+                        match exit {
+                            ExitReason::Return(ret) => {
+                                decode_return(&mut stdout, ret, output_types);
+                            }
+
+                            _ => {
+                                writeln!(stdout, "{:?}", exit).expect("Error writing Ok to stdout");
+                            }
+                        }
                     }
                     Err(e) => {
                         writeln!(stdout, "error: {}", e).expect("Error writing Err to stdout");
@@ -165,3 +174,53 @@ fn encode_arg(ty: &str, value: &str) -> EncodedArg {
     }
 }
 
+fn decode_return(stdout: &mut Stdout, ret: Vec<u8>, output_types: Vec<String>) {
+    if ret.is_empty() {
+        writeln!(stdout, "()").unwrap();
+        return;
+    }
+
+    let mut outputs: Vec<String> = Vec::new();
+
+    for (i, ty) in output_types.iter().enumerate() {
+        let head_offset: usize = i * 32;
+        let head: &[u8] = &ret[head_offset..head_offset + 32];
+
+        match ty.as_str() {
+            "uint256" | "uint" => {
+                let v: U256 = U256::from_big_endian(head);
+                outputs.push(v.to_string());
+            }
+
+            "bool" => {
+                outputs.push((head[31] == 1).to_string());
+            }
+
+            "address" => {
+                let addr: &[u8] = &head[12..32];
+                outputs.push(format!("0x{}", hex::encode(addr)));
+            }
+
+            "string" => {
+                let offset: usize = U256::from_big_endian(head).as_usize();
+
+                let len_bytes: &[u8] = &ret[offset..offset + 32];
+                let len: usize = U256::from_big_endian(len_bytes).as_usize();
+
+                let data_start: usize = offset + 32;
+                let data: &[u8] = &ret[data_start..data_start + len];
+
+                let s: String = String::from_utf8_lossy(data).to_string();
+                outputs.push(format!("\"{}\"", s));
+            }
+
+            _ => outputs.push(format!("<unsupported {}>", ty)),
+        }
+    }
+
+    if outputs.len() == 1 {
+        writeln!(stdout, "{}", outputs[0]).unwrap();
+    } else {
+        writeln!(stdout, "({})", outputs.join(", ")).unwrap();
+    }
+}

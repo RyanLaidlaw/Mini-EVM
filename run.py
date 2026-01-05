@@ -7,14 +7,14 @@ import shutil
 
 OUT_PATH = "./out"
 
-def call(input_types: dict, sig: str, *args: str) -> None:
+def call(input_types: dict, output_types: dict, sig: str, *args: str) -> None:
     """
     Writes commands to the EVM, kind of like foundry cast
     
     @param sig: (str) the function signature to call in the contract (ex: `setNumber(uint256)`)
     @param args: (str) arguments to pass into the function
     """
-    if sig not in input_types:
+    if sig not in input_types or sig not in output_types:
         print(f"Function signature '{sig}' is incorrect.")
         return
     
@@ -22,7 +22,8 @@ def call(input_types: dict, sig: str, *args: str) -> None:
         "type": "call",
         "signature": sig,
         "args": list(args),
-        "types": input_types[sig]
+        "input_types": input_types[sig],
+        "output_types": output_types[sig]
     }
     proc.stdin.write(json.dumps(cmd) + "\n")
     proc.stdin.flush()
@@ -106,6 +107,7 @@ if __name__ == '__main__':
         abi = json.load(file)
 
     input_types = {}
+    output_types = {}
     contracts = abi["contracts"]
     for contract, _ in contracts.items():
         for method in contracts[contract]["abi"]:
@@ -114,7 +116,8 @@ if __name__ == '__main__':
                 types = [inp["type"] for inp in method["inputs"]]
                 sig = f"{name}({','.join(types)})"
                 input_types[sig] = types
-
+                if "outputs" in method:
+                    output_types[sig] = [t["type"] for t in method["outputs"]]
 
     try:
         while True:
@@ -125,7 +128,7 @@ if __name__ == '__main__':
                 break
 
             parts = txn.split()
-            call(input_types, parts[0], *parts[1:])
+            call(input_types, output_types, parts[0], *parts[1:])
     except:
         pass # don't care about ctrl-c error
     finally:
