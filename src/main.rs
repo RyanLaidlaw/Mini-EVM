@@ -219,8 +219,8 @@ fn decode_return(stdout: &mut Stdout, ret: Vec<u8>, output_types: Vec<String>) {
     }
 
     if outputs.len() == 1 {
-        writeln!(stdout, "{}", outputs[0]).unwrap();
+        writeln!(stdout, "{}", outputs[0]).expect("Error writing output to stdout");
     } else {
-        writeln!(stdout, "({})", outputs.join(", ")).unwrap();
+        writeln!(stdout, "({})", outputs.join(", ")).expect("Error writing output to stdout");
     }
 }
